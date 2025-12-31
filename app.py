@@ -1,16 +1,16 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-import plotly.graph_objects as go # Needed for Radar Charts
+import plotly.graph_objects as go
 
 # 1. Page Configuration
 st.set_page_config(page_title="NBA Analytics Dashboard", page_icon="🏀", layout="wide")
 
-# 2. Load Data
+# 2. Load Data (Cached)
 @st.cache_data
 def load_data():
     games = pd.read_csv('master_games.csv')
-    players = pd.read_csv('master_player_stats.csv')
+    players = pd.read_csv('master_player_stats.csv', low_memory=False)
     rankings = pd.read_csv('ranking.csv')
     
     # Fix 1: Merge Conference info
@@ -27,7 +27,7 @@ def load_data():
 try:
     df_games, df_players = load_data()
 except FileNotFoundError:
-    st.error("Error: CSV files not found.")
+    st.error("Error: CSV files not found. Please ensure master_games.csv exists.")
     st.stop()
 
 # 3. Sidebar Filters
@@ -38,24 +38,26 @@ st.sidebar.markdown("**About this Dashboard**")
 st.sidebar.markdown("""
 - **Data Source:** NBA Official Records (2004-2022)
 - **Tech Stack:** Python, Streamlit, Plotly
-- **Developer:** Saurabh Kumar
+- **Developer:** Saurabh Kumar, Riddhima Biswas, Abhijit Dalai
 """)
+
+# Global Season Filter
 all_seasons = sorted(df_games['SEASON'].unique())
 selected_season_range = st.sidebar.slider("Select Season Range:", 
                                           min_value=int(df_games['SEASON'].min()), 
                                           max_value=int(df_games['SEASON'].max()), 
                                           value=(2010, 2022))
 
-# Filter Data
+# Filter Data Global
 df_filtered = df_games[(df_games['SEASON'] >= selected_season_range[0]) & 
                        (df_games['SEASON'] <= selected_season_range[1])]
 
-# 4. Main Dashboard
+# 4. Main Dashboard UI
 st.title("🏀 NBA Evolution Analysis")
-st.markdown("Analyzing how the game has changed: **Scoring, Home Advantage, and Star Power.**")
+st.markdown("Analyzing how the game has changed: **Scoring, Home Advantage, Star Power, and Team Rankings.**")
 
-# --- UPDATED TABS ---
-tab1, tab2, tab3, tab4 = st.tabs(["📈 Trends", "🌍 Conference", "⚔️ Head-to-Head", "👤 Players"])
+# --- UPDATED TABS (Added Rankings Tab) ---
+tab1, tab2, tab3, tab4, tab5 = st.tabs(["📈 Trends", "🌍 Conference", "⚔️ Head-to-Head", "👤 Players", "🏆 Rankings"])
 
 # --- TAB 1: TRENDS ---
 with tab1:
@@ -85,48 +87,35 @@ with tab2:
                       barmode='group', template='plotly_dark')
     st.plotly_chart(fig_conf, use_container_width=True)
 
-    # --- ADD TO TAB 2 (Bottom) ---
     st.markdown("---")
     st.subheader("🔥 Dynasty Heatmap: Consistency over Time")
-
-    # 1. Prepare Win Data for every team, every season
-    # We need to stack Home and Away wins to get total season record
+    
+    # Heatmap Logic
     season_standings = df_filtered.groupby(['SEASON', 'HOME_TEAM_NAME'])['IS_HOME_WIN'].sum().reset_index()
     season_standings.rename(columns={'HOME_TEAM_NAME': 'TEAM', 'IS_HOME_WIN': 'HOME_WINS'}, inplace=True)
-
-    # (For a quick heatmap, just using Home Wins is often enough to show the trend, 
-    # but getting total wins is better if we had time. Let's stick to Home Wins for speed as it's a proxy for dominance).
-
-    # Pivot data for Heatmap: Index=Team, Columns=Season, Values=Wins
     heatmap_data = season_standings.pivot(index='TEAM', columns='SEASON', values='HOME_WINS')
-
-    # 2. Plot Heatmap
+    
     fig_heat = px.imshow(heatmap_data, 
                         labels=dict(x="Season", y="Team", color="Home Wins"),
-                        x=heatmap_data.columns,
-                        y=heatmap_data.index,
-                        color_continuous_scale='Magma', # 'Magma' or 'Viridis' look great in dark mode
+                        x=heatmap_data.columns, y=heatmap_data.index,
+                        color_continuous_scale='Magma',
                         title="Team Performance Intensity (Home Wins)")
-
-    fig_heat.update_layout(template='plotly_dark', height=800) # Taller chart to see all teams
+    fig_heat.update_layout(template='plotly_dark', height=800)
     st.plotly_chart(fig_heat, use_container_width=True)
 
-
-# --- TAB 3: HEAD-TO-HEAD (UPGRADED) ---
+# --- TAB 3: HEAD-TO-HEAD ---
 with tab3:
     st.subheader("⚔️ Team Comparison Radar")
     
-    # 1. Prepare Data: Include Percentage Stats
+    # Prepare Data
     home_stats = df_filtered[['HOME_TEAM_NAME', 'PTS_home', 'AST_home', 'REB_home', 'FG_PCT_home', 'FG3_PCT_home']].rename(
         columns={'HOME_TEAM_NAME':'TEAM', 'PTS_home':'PTS', 'AST_home':'AST', 'REB_home':'REB', 'FG_PCT_home':'FG%', 'FG3_PCT_home':'3P%'})
-    
     away_stats = df_filtered[['AWAY_TEAM_NAME', 'PTS_away', 'AST_away', 'REB_away', 'FG_PCT_away', 'FG3_PCT_away']].rename(
         columns={'AWAY_TEAM_NAME':'TEAM', 'PTS_away':'PTS', 'AST_away':'AST', 'REB_away':'REB', 'FG_PCT_away':'FG%', 'FG3_PCT_away':'3P%'})
     
     team_stats_all = pd.concat([home_stats, away_stats])
     avg_stats = team_stats_all.groupby('TEAM').mean().reset_index()
 
-    # 2. Select Teams
     teams_list = sorted(avg_stats['TEAM'].unique())
     col_a, col_b = st.columns(2)
     with col_a:
@@ -134,49 +123,102 @@ with tab3:
     with col_b:
         team2 = st.selectbox("Select Team B", teams_list, index=1)
 
-    # 3. Filter Data & Normalize for Radar
-    # We multiply percentages by 100 so they look good on the chart alongside points
     t1_data = avg_stats[avg_stats['TEAM'] == team1].iloc[0]
     t2_data = avg_stats[avg_stats['TEAM'] == team2].iloc[0]
 
-    # Create Normalized Values for the Chart (so 30% doesn't look tiny next to 100 points)
-    # We are just visualizing raw values, but be aware of the scale difference.
-    # For a hackathon, raw values are usually fine if you explain them.
-    
     categories = ['Points', 'Assists', 'Rebounds', 'FG %', '3P %']
-    
-    # Values: Multiply percentages by 100 to make them visible (e.g. 0.45 -> 45)
     t1_vals = [t1_data['PTS'], t1_data['AST'], t1_data['REB'], t1_data['FG%']*100, t1_data['3P%']*100]
     t2_vals = [t2_data['PTS'], t2_data['AST'], t2_data['REB'], t2_data['FG%']*100, t2_data['3P%']*100]
 
     fig_radar = go.Figure()
-    
-    fig_radar.add_trace(go.Scatterpolar(
-        r=t1_vals, theta=categories, fill='toself', name=team1
-    ))
-    
-    fig_radar.add_trace(go.Scatterpolar(
-        r=t2_vals, theta=categories, fill='toself', name=team2
-    ))
-
-    fig_radar.update_layout(
-        polar=dict(radialaxis=dict(visible=True, range=[0, 120])), # Fixed range keeps shapes comparable
-        template='plotly_dark',
-        title=f"Comparison: {team1} vs {team2}"
-    )
+    fig_radar.add_trace(go.Scatterpolar(r=t1_vals, theta=categories, fill='toself', name=team1))
+    fig_radar.add_trace(go.Scatterpolar(r=t2_vals, theta=categories, fill='toself', name=team2))
+    fig_radar.update_layout(polar=dict(radialaxis=dict(visible=True, range=[0, 120])), template='plotly_dark')
     
     st.plotly_chart(fig_radar, use_container_width=True)
-    st.info("Insight: Percentages are scaled (x100) to fit the chart. A wider shape means a more dominant all-around team.")
 
-# --- TAB 4: PLAYERS ---
+# --- TAB 4: PLAYERS (UPGRADED) ---
 with tab4:
-    st.subheader("Identifying the Superstars")
-    curr_season = st.selectbox("Select Season:", all_seasons, index=len(all_seasons)-1)
+    st.subheader("👤 Player Insights")
+    
+    # 1. Scatter Plot (General)
+    curr_season = st.selectbox("Select Season for Overview:", all_seasons, index=len(all_seasons)-1)
     season_stats = df_players[df_players['SEASON'] == curr_season]
+    
+    # Aggregating for Scatter
     top_players = season_stats.groupby('PLAYER_NAME')[['PTS', 'REB', 'AST']].mean().reset_index()
     top_players = top_players[top_players['PTS'] > 10]
     
     fig_player = px.scatter(top_players, x='PTS', y='REB', size='PTS', color='AST',
-                            hover_name='PLAYER_NAME', title=f'Player Stats ({curr_season})',
+                            hover_name='PLAYER_NAME', title=f'Offensive Leaders ({curr_season})',
                             template='plotly_dark', color_continuous_scale='Viridis')
     st.plotly_chart(fig_player, use_container_width=True)
+    
+    st.markdown("---")
+    
+    # 2. Player Career Search (New Interactivity!)
+    st.subheader("🔎 Search Player Career Trajectory")
+    
+    # Get list of unique players
+    player_list = sorted(df_players['PLAYER_NAME'].unique())
+    # Default selection (e.g., LeBron)
+    default_ix = player_list.index("LeBron James") if "LeBron James" in player_list else 0
+    
+    selected_player = st.selectbox("Type to Search Player:", player_list, index=default_ix)
+    
+    # Filter data for this player
+    player_career = df_players[df_players['PLAYER_NAME'] == selected_player]
+    
+    # Group by Season to see evolution
+    career_stats = player_career.groupby('SEASON')[['PTS', 'REB', 'AST']].mean().reset_index()
+    
+    fig_career = px.line(career_stats, x='SEASON', y=['PTS', 'REB', 'AST'], 
+                         markers=True, title=f"Career Trajectory: {selected_player}",
+                         template='plotly_dark')
+    st.plotly_chart(fig_career, use_container_width=True)
+
+# --- TAB 5: RANKINGS (NEW FEATURE) ---
+with tab5:
+    st.subheader("🏆 Team Rankings & Win-Loss Patterns")
+    
+    rank_season = st.selectbox("Select Season for Rankings:", all_seasons, index=len(all_seasons)-1, key='rank_select')
+    
+    # Calculate Wins/Losses for that season
+    # Get Home Wins
+    season_games = df_games[df_games['SEASON'] == rank_season]
+    
+    # Home Wins
+    home_wins = season_games[season_games['PTS_home'] > season_games['PTS_away']].groupby('HOME_TEAM_NAME').size()
+    # Away Wins
+    away_wins = season_games[season_games['PTS_away'] > season_games['PTS_home']].groupby('AWAY_TEAM_NAME').size()
+    
+    # Combine
+    total_wins = home_wins.add(away_wins, fill_value=0).sort_values(ascending=False).reset_index()
+    total_wins.columns = ['Team', 'Wins']
+    
+    # Calculate Losses (Total Games - Wins)
+    # Count games played (Home + Away)
+    games_played_home = season_games.groupby('HOME_TEAM_NAME').size()
+    games_played_away = season_games.groupby('AWAY_TEAM_NAME').size()
+    total_games = games_played_home.add(games_played_away, fill_value=0).reset_index()
+    total_games.columns = ['Team', 'Games Played']
+    
+    # Merge
+    standings = pd.merge(total_wins, total_games, on='Team')
+    standings['Losses'] = standings['Games Played'] - standings['Wins']
+    standings['Win %'] = (standings['Wins'] / standings['Games Played'] * 100).round(1)
+    
+    # Display Leaderboard
+    col_rank1, col_rank2 = st.columns([1, 2])
+    
+    with col_rank1:
+        st.caption(f"Regular Season Standings ({rank_season})")
+        st.dataframe(standings[['Team', 'Wins', 'Losses', 'Win %']].style.highlight_max(axis=0, color='darkgreen'), height=600)
+        
+    with col_rank2:
+        st.caption("Win % Distribution")
+        fig_standings = px.bar(standings, x='Wins', y='Team', orientation='h', 
+                               color='Win %', title=f"Leaderboard: {rank_season}",
+                               template='plotly_dark', color_continuous_scale='Blues')
+        fig_standings.update_layout(yaxis={'categoryorder':'total ascending'})
+        st.plotly_chart(fig_standings, use_container_width=True)
