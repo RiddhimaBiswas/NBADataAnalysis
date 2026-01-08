@@ -1,85 +1,121 @@
-🚀 Live Dashboard
 
-🌐 Link: https://nbadataanalysis.streamlit.app/
+# 🏀 NBA Data Analysis Web App
 
-🎯 Objectives of the Dashboard
+An interactive **NBA Data Analysis web application** built using **Python and Streamlit** that allows users to explore, analyze, and visualize NBA player and team statistics through an intuitive dashboard.
 
-This analytics dashboard was created to satisfy the following requirements:
+---
 
-✔ Season-wise & game-wise scoring trends
-✔ Team-wise comparisons & East vs West conference dynamics
-✔ Player insights – top scorers, rebounds, assists
-✔ Official win–loss rankings & standings table
-✔ Interactive filters: season slider, team selector
-✔ Deep dive – team performance trend over time
+## 🚀 Live Demo
 
-✨ Dashboard Features (What You Can Do)
-Feature	Description
-📈 League Trends	View 20-year NBA scoring trend & home-court win percentage
-🌍 Conference Analysis	Bar chart + heatmap comparing East vs West dominance
-⚔️ Head-to-Head	Radar chart comparing two teams across 5 performance metrics
-👤 Player Stars	Top 10 players each season (PTS, REB, AST) + scatter plot
-🏆 Season Rankings	Full win–loss standings table based on total season wins
-📊 Team Trends	Select a team and see its historical trajectory (Win%, Avg Points)
-🎛 Interactivity	Filters for year range, team, and season
-🧠 Insights From the Data (Useful If Asked in Interview / Judging)
+👉 *(Add your deployed Streamlit link here once live)*
 
-🟢 NBA average scoring increased significantly after 2015
-🟢 Home-court advantage remains around 55% win rate
-🟢 Western conference dominated majority of seasons, though East shows comeback in specific years
-🟢 Scatter plots reveal elite scorers form a clustered power curve
-🟢 Radar view clearly differentiates offensive-heavy vs defensive-rebounding teams
-🟢 Heatmap visually reveals dynasties — teams consistently high in home wins
+---
 
-🏗 Tech Stack
-Layer	Technologies
-🧠 Programming	Python
-🖥 Web Framework	Streamlit
-📊 Visualization	Plotly Express, Plotly Graph Objects
-📂 Data Handling	Pandas, Numpy
-🗂 Dataset Format	CSV
-📂 Dataset Description
+## 📌 Features
 
-Folder contains full NBA dataset:
+* 📊 Interactive visualizations of NBA data
+* 🏃 Player-wise performance analysis
+* 🏀 Team-wise statistical comparisons
+* 📈 Data-driven insights using real NBA datasets
+* 🧮 Clean and user-friendly UI built with Streamlit
 
-data/
- ├─ master_games.csv             # game-level stats (pts, fg%, assists, rebounds...)
- ├─ master_player_stats.csv      # player-level features season-wise
- ├─ ranking.csv                  # conference ID mapping
+---
 
+## 🛠 Tech Stack
 
-Coverage: Seasons 2004 – 2022
+* **Python**
+* **Streamlit**
+* **Pandas**
+* **NumPy**
+* **Matplotlib / Seaborn**
 
-🧭 Project Structure
+---
+
+## 📂 Project Structure
+
+```
 NBADataAnalysis/
- ├─ app.py                  # ⭐ Main dashboard application (Streamlit)
- ├─ data/                   # CSV dataset folder
- │   ├─ master_games.csv
- │   ├─ master_player_stats.csv
- │   ├─ ranking.csv
- ├─ requirements.txt        # Libraries needed
- ├─ README.md               # Documentation (this file)
- └─ screenshots/            # Optional screenshots (add manually)
+│
+├── app.py                # Main Streamlit app
+├── requirements.txt      # Project dependencies
+├── data/                 # NBA datasets (CSV files)
+├── notebooks/            # Jupyter notebooks (EDA)
+├── .streamlit/           # Streamlit configuration
+└── README.md             # Project documentation
+```
 
-🛠 Installation & Running Guide (Local Machine)
-1️⃣ Clone the Repository
+---
+
+## ⚙️ Installation & Setup (Local)
+
+1. **Clone the repository**
+
+```bash
 git clone https://github.com/RiddhimaBiswas/NBADataAnalysis.git
 cd NBADataAnalysis
+```
 
-2️⃣ Install Python Dependencies
+2. **Install dependencies**
+
+```bash
 pip install -r requirements.txt
+```
 
-3️⃣ Run Streamlit App
+3. **Run the app**
+
+```bash
 streamlit run app.py
+```
 
+4. Open your browser at:
 
-➡ Output will open in browser at:
-
+```
 http://localhost:8501
+```
 
-🌟 Deployment (Optional)
+---
 
-Deploy using Streamlit Cloud in 1 minute:
+## 🎯 Project Objectives
+
+* Perform Exploratory Data Analysis (EDA) on NBA datasets
+* Visualize key performance metrics
+* Build and deploy a Python-based data dashboard
+* Showcase data analysis and visualization skills
+
+---
+
+## 📈 Future Enhancements
+
+* Add player comparison feature
+* Advanced filtering and search
+* Integration with live NBA APIs
+* More interactive visualizations
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome!
+
+1. Fork the repo
+2. Create a new branch (`feature-xyz`)
+3. Commit your changes
+4. Open a Pull Request
+
+---
+
+## 📄 License
+
+This project is for **educational and learning purposes**.
+
+---
+
+## 🙌 Author
+
+**Riddhima Biswas**
+
+If you like this project, don’t forget to ⭐ the repository!
+
 
 1️⃣ Go to https://share.streamlit.io
 
