@@ -7,8 +7,7 @@ An interactive **NBA Data Analysis web application** built using **Python and St
 
 ## 🚀 Live Demo
 
-👉 *(Add your deployed Streamlit link here once live)*
-
+👉 https://nbadataanalysis-ttva2yhzdhlkztvdkgmhfu.streamlit.app/
 ---
 
 ## 📌 Features
